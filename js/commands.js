@@ -4,6 +4,7 @@
 
 import { buildNeofetchBlocks } from "./neofetch.js";
 import { toYaml } from "./yaml.js";
+import { THEMES } from "./theme.js";
 
 const FILES = {
   "about.txt": "about",
@@ -298,6 +299,26 @@ function cmdCat(args, ctx) {
   return dispatchNamed(target, args.slice(1), ctx);
 }
 
+function cmdTheme(args, ctx) {
+  if (args.length === 0) {
+    const out = [...heading("Themes"), text(`Current: ${ctx.getTheme()}`, "muted"), blank()];
+    for (const [key, def] of Object.entries(THEMES)) {
+      out.push(text(`  ${key.padEnd(12)} ${def.label}`));
+    }
+    out.push(blank());
+    out.push(text("Usage: theme <name>", "muted"));
+    return out;
+  }
+  const name = args[0].toLowerCase();
+  if (!ctx.setTheme(name)) {
+    return [
+      text(`theme: no such theme '${args[0]}'`, "error"),
+      text(`Available: ${Object.keys(THEMES).join(", ")}`),
+    ];
+  }
+  return [text(`Theme switched to ${THEMES[name].label}.`, "muted")];
+}
+
 function cmdSudo(_args, _ctx) {
   return [
     text("Permission denied.", "error"),
@@ -317,6 +338,7 @@ export const COMMANDS = {
   resume: { summary: "open/download resume PDF", run: cmdResume, aliases: [] },
   clear: { summary: "clear the screen", run: cmdClear, aliases: ["cls"] },
   banner: { summary: "replay the system info banner", run: cmdBanner, aliases: ["neofetch"] },
+  theme: { summary: "switch color theme (try: theme powershell)", run: cmdTheme, aliases: [] },
   ls: { summary: "list sections (alias)", run: cmdLs, aliases: [] },
   cat: { summary: "cat <file> — alias for section commands", run: cmdCat, aliases: [] },
   sudo: { summary: "", run: cmdSudo, aliases: [], hidden: true },

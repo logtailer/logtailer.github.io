@@ -5,6 +5,7 @@ import { content } from "./content.js";
 import * as terminal from "./terminal.js";
 import * as boot from "./boot.js";
 import * as history from "./history.js";
+import * as theme from "./theme.js";
 import { dispatch, completions } from "./commands.js";
 
 function init() {
@@ -19,27 +20,39 @@ function init() {
   terminal.init({ outputEl, liveEl, scrollEl, promptLabelEl, inputEl, terminalEl });
   renderPlainFallback(content);
 
+  // A returning visitor's theme choice, applied before boot starts so the
+  // whole intro plays in the right colors, not just the interactive part.
+  const state = { themeName: theme.getStoredTheme(), promptString: "" };
+  theme.applyTheme(state.themeName);
+  state.promptString = theme.getPromptString(state.themeName, content.meta);
+
   const ctx = {
     content,
     escapeHtml: terminal.escapeHtml,
     clearOutput: terminal.clearOutput,
+    getTheme: () => state.themeName,
+    setTheme: (name) => {
+      if (!theme.applyTheme(name)) return false;
+      state.themeName = name;
+      state.promptString = theme.getPromptString(name, content.meta);
+      terminal.setPromptLabel(state.promptString);
+      return true;
+    },
   };
 
-  const promptString = `${content.meta.promptUser}@${content.meta.promptHost}:~$`;
-
-  boot.run(content, { hintEl }).then(() => startInteractive(promptString, ctx, inputEl));
+  boot.run(content, { hintEl }).then(() => startInteractive(state, ctx, inputEl));
 }
 
-function runLine(line, promptString, ctx) {
-  terminal.appendPromptEcho(promptString, line);
+function runLine(line, state, ctx) {
+  terminal.appendPromptEcho(state.promptString, line);
   history.push(line);
   const blocks = dispatch(line, ctx);
   terminal.appendBlocks(blocks);
   terminal.focusInput();
 }
 
-function startInteractive(promptString, ctx, inputEl) {
-  terminal.setPromptLabel(promptString);
+function startInteractive(state, ctx, inputEl) {
+  terminal.setPromptLabel(state.promptString);
   document.getElementById("prompt-line").hidden = false;
   terminal.focusInput();
 
@@ -49,7 +62,7 @@ function startInteractive(promptString, ctx, inputEl) {
       const line = terminal.getInputValue();
       terminal.setInputValue("");
       history.reset();
-      runLine(line, promptString, ctx);
+      runLine(line, state, ctx);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       terminal.setInputValue(history.prev(terminal.getInputValue()));
@@ -63,22 +76,22 @@ function startInteractive(promptString, ctx, inputEl) {
       if (matches.length === 1) {
         terminal.setInputValue(matches[0] + " ");
       } else if (matches.length > 1) {
-        terminal.appendPromptEcho(promptString, current);
+        terminal.appendPromptEcho(state.promptString, current);
         terminal.appendLine(matches.join("  "));
       }
     }
   });
 
-  setupMobileControls(promptString, ctx);
+  setupMobileControls(state, ctx);
 }
 
-function setupMobileControls(promptString, ctx) {
+function setupMobileControls(state, ctx) {
   const controls = document.getElementById("mobile-controls");
   if (!controls) return;
 
   controls.querySelectorAll("button[data-cmd]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      runLine(btn.dataset.cmd, promptString, ctx);
+      runLine(btn.dataset.cmd, state, ctx);
     });
   });
 
