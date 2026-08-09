@@ -107,9 +107,32 @@ body {
   margin-top: 0.15em;
 }
 
+.line.rule {
+  color: var(--muted);
+  opacity: 0.5;
+  white-space: pre;
+}
+
 .line.subheading {
   color: var(--subheading);
   font-weight: 600;
+  margin-top: 0.2em;
+}
+
+.line.table-head {
+  color: var(--heading);
+  font-weight: 600;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.line.table-row {
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.line.indent {
+  padding-left: 2ch;
 }
 
 .line.muted {

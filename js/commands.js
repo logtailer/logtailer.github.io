@@ -24,68 +24,124 @@ function html(value, className) {
 function blank() {
   return text(" ", "blank");
 }
+// Returns [headingLine, ruleLine] — spread this at call sites (...heading("X"))
+// so every section gets a consistent title + underline without repeating it.
 function heading(value) {
-  return text(value, "heading");
+  return [text(value, "heading"), text("─".repeat(Math.min(60, value.length + 2)), "rule")];
+}
+function subheading(value) {
+  return text(value, "subheading");
+}
+function row(value, className) {
+  return text(value, className || "table-row");
+}
+function head(value) {
+  return text(value, "table-head");
+}
+
+// Column widths across a set of rows, so every row in a table lines up.
+function colWidths(rows, count) {
+  const widths = new Array(count).fill(0);
+  for (const r of rows) {
+    for (let i = 0; i < count; i++) widths[i] = Math.max(widths[i], String(r[i] ?? "").length);
+  }
+  return widths;
+}
+// Pads every cell but the last (no point padding what's already at the edge).
+function padCols(cells, widths) {
+  return cells
+    .map((c, i) => (i === cells.length - 1 ? String(c) : String(c).padEnd(widths[i])))
+    .join("  ");
+}
+
+// `ls`-style multi-column grid for a flat list of short items.
+function columnize(items, columns = 3) {
+  const width = Math.max(...items.map((i) => i.length)) + 2;
+  const lines = [];
+  for (let i = 0; i < items.length; i += columns) {
+    lines.push(row(items.slice(i, i + columns).map((s) => s.padEnd(width)).join("").trimEnd(), "table-row indent"));
+  }
+  return lines;
 }
 
 function cmdHelp(_args, ctx) {
-  const out = [heading("Available commands:")];
+  const out = [...heading("Available Commands")];
   const seen = new Set();
   for (const [name, def] of Object.entries(COMMANDS)) {
     if (def.hidden || seen.has(name)) continue;
     seen.add(name);
-    out.push(text(`  ${name.padEnd(12)} ${def.summary}`));
+    out.push(row(`  ${name.padEnd(12)} ${def.summary}`));
   }
   out.push(blank());
-  out.push(text("Tip: use Tab to autocomplete, Up/Down to browse history."));
+  out.push(text("Tip: use Tab to autocomplete, Up/Down to browse history.", "muted"));
   return out;
 }
 
 function cmdAbout(_args, ctx) {
   const { meta, summary } = ctx.content;
-  return [heading(`${meta.name} — ${meta.title}`), blank(), text(summary)];
+  return [...heading(`${meta.name} — ${meta.title}`), blank(), text(summary)];
 }
 
+// Experience/education deliberately aren't rendered as a single 3-column table:
+// company/school names are long enough (40+ chars) that a shared column width
+// across all rows pushes PERIOD off the edge of any reasonably sized terminal.
+// Instead, only role+period (both short) share a column so they align down
+// the list, and the long field gets its own line.
 function cmdExperience(_args, ctx) {
-  const out = [heading("Experience")];
-  for (const job of ctx.content.experience) {
+  const jobs = ctx.content.experience;
+  const roleWidth = Math.max(...jobs.map((j) => j.role.length));
+  const out = [...heading("Experience")];
+  for (const job of jobs) {
     out.push(blank());
-    out.push(text(`${job.role} — ${job.company}`, "subheading"));
-    out.push(text(job.period, "muted"));
+    out.push(row(`${job.role.padEnd(roleWidth)}  ${job.period}`, "subheading"));
+    out.push(text(job.company, "muted"));
     for (const b of job.bullets) out.push(text(`  - ${b}`));
   }
   return out;
 }
 
 function cmdEducation(_args, ctx) {
-  const out = [heading("Education")];
-  for (const e of ctx.content.education) {
+  const edu = ctx.content.education;
+  const degreeWidth = Math.max(...edu.map((e) => e.degree.length));
+  const out = [...heading("Education")];
+  for (const e of edu) {
     out.push(blank());
-    out.push(text(e.degree, "subheading"));
-    out.push(text(`${e.school} — ${e.period}`, "muted"));
+    out.push(row(`${e.degree.padEnd(degreeWidth)}  ${e.period}`, "subheading"));
+    out.push(text(e.school, "muted"));
   }
   return out;
 }
 
 function cmdSkills(_args, ctx) {
   const s = ctx.content.skills;
-  return [
-    heading("Skills"),
-    blank(),
-    text("Core:          " + s.core.join(", ")),
-    text("Observability: " + s.observability.join(", ")),
-    text("Platform:      " + s.platform.join(", ")),
+  const groups = [
+    ["Core", s.core],
+    ["Observability", s.observability],
+    ["Platform", s.platform],
   ];
+  // Fewer columns on narrow viewports so the grid doesn't clip the longer
+  // skill names (matches the .mobile-controls breakpoint in terminal.css).
+  const columns = window.innerWidth <= 640 ? 2 : 3;
+  const out = [...heading("Skills")];
+  for (const [label, items] of groups) {
+    out.push(blank());
+    out.push(subheading(label));
+    out.push(...columnize(items, columns));
+  }
+  return out;
 }
 
 function cmdCerts(_args, ctx) {
-  const out = [heading("Certifications")];
-  for (const c of ctx.content.certifications) {
-    out.push(blank());
+  const rows = ctx.content.certifications;
+  const widths = colWidths(rows.map((c) => [c.date, c.name]), 2);
+  const out = [...heading("Certifications"), blank()];
+  out.push(head(padCols(["DATE", "CERTIFICATION"], widths) + "  LINK"));
+  for (const c of rows) {
     out.push(
       html(
-        `${ctx.escapeHtml(c.date)} — ${ctx.escapeHtml(c.name)} ` +
-          `(<a href="${ctx.escapeHtml(c.url)}" target="_blank" rel="noopener noreferrer">verify</a>)`
+        `${ctx.escapeHtml(c.date.padEnd(widths[0]))}  ${ctx.escapeHtml(c.name.padEnd(widths[1]))}  ` +
+          `<a href="${ctx.escapeHtml(c.url)}" target="_blank" rel="noopener noreferrer">verify</a>`,
+        "table-row"
       )
     );
   }
@@ -95,10 +151,13 @@ function cmdCerts(_args, ctx) {
 function cmdProjects(args, ctx) {
   const projects = ctx.content.projects;
   if (args.length === 0) {
-    const out = [heading("Personal Projects"), text("(run `projects <name>` for details)")];
+    // Taglines are too long to share a column with PROJECT at any reasonable
+    // terminal width without clipping, so this stays a name + indented
+    // description list rather than a single-line table row.
+    const out = [...heading("Personal Projects"), text("(run `projects <name>` for details)", "muted")];
     for (const p of projects) {
       out.push(blank());
-      out.push(text(p.name, "subheading"));
+      out.push(row(p.name, "subheading"));
       out.push(text(`  ${p.tagline}`));
     }
     return out;
@@ -111,7 +170,7 @@ function cmdProjects(args, ctx) {
       text("Run `projects` with no arguments to list them."),
     ];
   }
-  const out = [heading(project.name), text(project.tagline, "muted"), blank()];
+  const out = [...heading(project.name), text(project.tagline, "muted"), blank()];
   for (const d of project.details) out.push(text(`  - ${d}`));
   return out;
 }
@@ -119,7 +178,7 @@ function cmdProjects(args, ctx) {
 function cmdContact(_args, ctx) {
   const c = ctx.content.contact;
   return [
-    heading("Contact"),
+    ...heading("Contact"),
     blank(),
     text(`Phone:    ${c.phone}`),
     html(`Email:    <a href="mailto:${ctx.escapeHtml(c.email)}">${ctx.escapeHtml(c.email)}</a>`),
