@@ -3,6 +3,7 @@
 // so this file stays testable/editable independent of terminal.js.
 
 import { buildNeofetchBlocks } from "./neofetch.js";
+import { toYaml } from "./yaml.js";
 
 const FILES = {
   "about.txt": "about",
@@ -60,6 +61,23 @@ function isNarrow() {
   return window.innerWidth <= 640;
 }
 
+// Pulls `-o <format>` / `--output <format>` out of an args list, wherever it
+// appears, and returns the remaining positional args separately — so e.g.
+// `projects stratusfleet -o json` and `projects -o json stratusfleet` both work.
+function extractOutputFlag(args) {
+  const rest = [];
+  let format = null;
+  for (let i = 0; i < args.length; i++) {
+    if ((args[i] === "-o" || args[i] === "--output") && i + 1 < args.length) {
+      format = args[i + 1].toLowerCase();
+      i++;
+    } else {
+      rest.push(args[i]);
+    }
+  }
+  return { format, rest };
+}
+
 // `ls`-style multi-column grid for a flat list of short items.
 function columnize(items, columns = 3) {
   const width = Math.max(...items.map((i) => i.length)) + 2;
@@ -83,12 +101,17 @@ function cmdHelp(_args, ctx) {
   }
   out.push(blank());
   out.push(text("Tip: use Tab to autocomplete, Up/Down to browse history.", "muted"));
+  out.push(text("Tip: most data commands support `-o json` / `-o yaml` for raw output.", "muted"));
   return out;
 }
 
 function cmdAbout(_args, ctx) {
   const { meta, summary } = ctx.content;
   return [...heading(`${meta.name} — ${meta.title}`), blank(), text(summary)];
+}
+function dataAbout(_args, ctx) {
+  const { name, title, yearsExperience } = ctx.content.meta;
+  return { name, title, yearsExperience, summary: ctx.content.summary };
 }
 
 // Experience/education deliberately aren't rendered as a single 3-column table:
@@ -116,6 +139,9 @@ function cmdExperience(_args, ctx) {
   }
   return out;
 }
+function dataExperience(_args, ctx) {
+  return ctx.content.experience;
+}
 
 function cmdEducation(_args, ctx) {
   const edu = ctx.content.education;
@@ -133,6 +159,9 @@ function cmdEducation(_args, ctx) {
     out.push(text(e.school, "muted"));
   }
   return out;
+}
+function dataEducation(_args, ctx) {
+  return ctx.content.education;
 }
 
 function cmdSkills(_args, ctx) {
@@ -152,6 +181,9 @@ function cmdSkills(_args, ctx) {
     out.push(...columnize(items, columns));
   }
   return out;
+}
+function dataSkills(_args, ctx) {
+  return ctx.content.skills;
 }
 
 function cmdCerts(_args, ctx) {
@@ -187,6 +219,9 @@ function cmdCerts(_args, ctx) {
   }
   return out;
 }
+function dataCerts(_args, ctx) {
+  return ctx.content.certifications;
+}
 
 function cmdProjects(args, ctx) {
   const projects = ctx.content.projects;
@@ -214,6 +249,14 @@ function cmdProjects(args, ctx) {
   for (const d of project.details) out.push(text(`  - ${d}`));
   return out;
 }
+function dataProjects(args, ctx) {
+  const projects = ctx.content.projects;
+  if (args.length === 0) return projects;
+  const slug = args[0].toLowerCase();
+  const project = projects.find((p) => p.slug === slug);
+  if (!project) throw new Error(`projects: no such project '${args[0]}'`);
+  return project;
+}
 
 function cmdContact(_args, ctx) {
   const c = ctx.content.contact;
@@ -225,6 +268,9 @@ function cmdContact(_args, ctx) {
     html(`LinkedIn: <a href="${ctx.escapeHtml(c.linkedinUrl)}" target="_blank" rel="noopener noreferrer">${ctx.escapeHtml(c.linkedin)}</a>`),
     html(`GitHub:   <a href="${ctx.escapeHtml(c.githubUrl)}" target="_blank" rel="noopener noreferrer">${ctx.escapeHtml(c.github)}</a>`),
   ];
+}
+function dataContact(_args, ctx) {
+  return ctx.content.contact;
 }
 
 function cmdResume(_args, _ctx) {
@@ -249,7 +295,7 @@ function cmdCat(args, ctx) {
   if (args.length === 0) return [text("usage: cat <file>", "error")];
   const target = FILES[args[0]];
   if (!target) return [text(`cat: ${args[0]}: No such file or directory`, "error")];
-  return dispatchNamed(target, [], ctx);
+  return dispatchNamed(target, args.slice(1), ctx);
 }
 
 function cmdSudo(_args, _ctx) {
@@ -261,13 +307,13 @@ function cmdSudo(_args, _ctx) {
 
 export const COMMANDS = {
   help: { summary: "list available commands", run: cmdHelp, aliases: [] },
-  about: { summary: "who is Sumit", run: cmdAbout, aliases: ["whoami"] },
-  experience: { summary: "work history", run: cmdExperience, aliases: ["exp"] },
-  education: { summary: "academic background", run: cmdEducation, aliases: ["edu"] },
-  skills: { summary: "technical skills", run: cmdSkills, aliases: [] },
-  certs: { summary: "certifications", run: cmdCerts, aliases: ["certifications"] },
-  projects: { summary: "personal projects (add a name for detail)", run: cmdProjects, aliases: [] },
-  contact: { summary: "how to reach Sumit", run: cmdContact, aliases: [] },
+  about: { summary: "who is Sumit", run: cmdAbout, aliases: ["whoami"], data: dataAbout },
+  experience: { summary: "work history", run: cmdExperience, aliases: ["exp"], data: dataExperience },
+  education: { summary: "academic background", run: cmdEducation, aliases: ["edu"], data: dataEducation },
+  skills: { summary: "technical skills", run: cmdSkills, aliases: [], data: dataSkills },
+  certs: { summary: "certifications", run: cmdCerts, aliases: ["certifications"], data: dataCerts },
+  projects: { summary: "personal projects (add a name for detail)", run: cmdProjects, aliases: [], data: dataProjects },
+  contact: { summary: "how to reach Sumit", run: cmdContact, aliases: [], data: dataContact },
   resume: { summary: "open/download resume PDF", run: cmdResume, aliases: [] },
   clear: { summary: "clear the screen", run: cmdClear, aliases: ["cls"] },
   banner: { summary: "replay the system info banner", run: cmdBanner, aliases: ["neofetch"] },
@@ -292,8 +338,27 @@ function dispatchNamed(name, args, ctx) {
       text("Type `help` to see available commands."),
     ];
   }
+  const def = COMMANDS[resolved];
+  const { format, rest } = extractOutputFlag(args);
+
+  if (format) {
+    if (!def.data) {
+      return [text(`${name}: -o is not supported for this command`, "error")];
+    }
+    if (format !== "json" && format !== "yaml") {
+      return [text(`${name}: unsupported output format '${format}' (use json or yaml)`, "error")];
+    }
+    try {
+      const value = def.data(rest, ctx);
+      const serialized = format === "json" ? JSON.stringify(value, null, 2) : toYaml(value);
+      return serialized.split("\n").map((line) => text(line));
+    } catch (err) {
+      return [text(err.message, "error")];
+    }
+  }
+
   try {
-    return COMMANDS[resolved].run(args, ctx) || [];
+    return def.run(rest, ctx) || [];
   } catch (err) {
     return [text(`error running '${name}': ${err.message}`, "error")];
   }
