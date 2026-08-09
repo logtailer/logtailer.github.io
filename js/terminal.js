@@ -11,7 +11,7 @@ export function init({ outputEl, liveEl, scrollEl, promptLabelEl, inputEl, termi
   terminalEl.addEventListener("mouseup", (e) => {
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) return;
-    inputEl.focus();
+    inputEl.focus({ preventScroll: true });
   });
 }
 
@@ -20,7 +20,7 @@ export function setPromptLabel(text) {
 }
 
 export function focusInput() {
-  refs.inputEl.focus();
+  refs.inputEl.focus({ preventScroll: true });
 }
 
 export function getInputValue() {
