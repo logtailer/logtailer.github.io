@@ -52,18 +52,29 @@ body {
   top: 0;
 }
 
-.terminal {
-  position: relative;
+.app {
+  height: 100vh;
+  height: 100dvh;
   max-width: 900px;
   margin: 0 auto;
-  padding: 1.5rem 1.25rem 1rem;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.terminal {
+  position: relative;
+  flex: 1;
+  min-height: 0; /* let this flex child shrink so scroll-region can actually scroll */
+  padding: 1.5rem 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .scroll-region {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: auto;
 }
@@ -177,8 +188,7 @@ body {
   padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom));
   background: var(--bg-alt);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  position: sticky;
-  bottom: 0;
+  flex: none;
   flex-wrap: wrap;
 }
 

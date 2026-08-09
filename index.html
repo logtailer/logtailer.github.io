@@ -12,41 +12,47 @@
 <body>
   <a class="skip-link" href="#plain-resume">Skip to plain-text resume</a>
 
-  <main id="terminal" class="terminal">
-    <div id="scroll-region" class="scroll-region">
-      <div id="output" class="output"></div>
+  <!-- Fixed to one viewport tall so #scroll-region is the only thing that
+       scrolls internally; without this the whole page grows with the
+       terminal's output and #plain-resume ends up visible right underneath
+       whatever command you just ran instead of staying a deliberate fallback. -->
+  <div id="app" class="app">
+    <main id="terminal" class="terminal">
+      <div id="scroll-region" class="scroll-region">
+        <div id="output" class="output"></div>
 
-      <div id="prompt-line" class="line prompt-line" hidden>
-        <span id="prompt-label" class="prompt-label">guest@portfolio:~$</span>
-        <span class="input-wrap">
-          <input
-            id="cmd-input"
-            type="text"
-            autocomplete="off"
-            autocapitalize="off"
-            autocorrect="off"
-            spellcheck="false"
-            aria-label="Terminal command input"
-          />
-        </span>
+        <div id="prompt-line" class="line prompt-line" hidden>
+          <span id="prompt-label" class="prompt-label">guest@portfolio:~$</span>
+          <span class="input-wrap">
+            <input
+              id="cmd-input"
+              type="text"
+              autocomplete="off"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+              aria-label="Terminal command input"
+            />
+          </span>
+        </div>
       </div>
-    </div>
 
-    <div id="skip-hint" class="skip-hint" hidden>press any key to skip intro</div>
+      <div id="skip-hint" class="skip-hint" hidden>press any key to skip intro</div>
 
-    <!-- Visually-hidden live region for screen readers; kept separate from #output
-         so announcing new text never clobbers the visible scrollback DOM. -->
-    <div id="sr-live" class="sr-only" aria-live="polite" aria-atomic="false"></div>
-  </main>
+      <!-- Visually-hidden live region for screen readers; kept separate from #output
+           so announcing new text never clobbers the visible scrollback DOM. -->
+      <div id="sr-live" class="sr-only" aria-live="polite" aria-atomic="false"></div>
+    </main>
 
-  <nav id="mobile-controls" class="mobile-controls" aria-label="Quick commands">
-    <button type="button" data-cmd="help">help</button>
-    <button type="button" data-cmd="about">about</button>
-    <button type="button" data-cmd="projects">projects</button>
-    <button type="button" data-cmd="contact">contact</button>
-    <button type="button" id="hist-up" aria-label="Previous command">▲</button>
-    <button type="button" id="hist-down" aria-label="Next command">▼</button>
-  </nav>
+    <nav id="mobile-controls" class="mobile-controls" aria-label="Quick commands">
+      <button type="button" data-cmd="help">help</button>
+      <button type="button" data-cmd="about">about</button>
+      <button type="button" data-cmd="projects">projects</button>
+      <button type="button" data-cmd="contact">contact</button>
+      <button type="button" id="hist-up" aria-label="Previous command">▲</button>
+      <button type="button" id="hist-down" aria-label="Next command">▼</button>
+    </nav>
+  </div>
 
   <section id="plain-resume" class="plain-resume" aria-label="Plain text resume">
     <!-- Populated at runtime by js/main.js from js/content.js, so it can never
