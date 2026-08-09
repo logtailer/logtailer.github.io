@@ -54,6 +54,12 @@ function padCols(cells, widths) {
     .join("  ");
 }
 
+// Below this, padded columns stop having room to breathe — matches the
+// .mobile-controls breakpoint in terminal.css.
+function isNarrow() {
+  return window.innerWidth <= 640;
+}
+
 // `ls`-style multi-column grid for a flat list of short items.
 function columnize(items, columns = 3) {
   const width = Math.max(...items.map((i) => i.length)) + 2;
@@ -70,7 +76,10 @@ function cmdHelp(_args, ctx) {
   for (const [name, def] of Object.entries(COMMANDS)) {
     if (def.hidden || seen.has(name)) continue;
     seen.add(name);
-    out.push(row(`  ${name.padEnd(12)} ${def.summary}`));
+    // Plain text (wraps) rather than a no-wrap table row: the summary is
+    // prose, not a data column, so on narrow screens it should wrap instead
+    // of forcing a horizontal scrollbar.
+    out.push(text(`  ${name.padEnd(12)} ${def.summary}`));
   }
   out.push(blank());
   out.push(text("Tip: use Tab to autocomplete, Up/Down to browse history.", "muted"));
@@ -86,14 +95,22 @@ function cmdAbout(_args, ctx) {
 // company/school names are long enough (40+ chars) that a shared column width
 // across all rows pushes PERIOD off the edge of any reasonably sized terminal.
 // Instead, only role+period (both short) share a column so they align down
-// the list, and the long field gets its own line.
+// the list, and the long field gets its own line. Even that pairing is too
+// wide for a phone screen, though, so on narrow viewports it drops the
+// padding entirely and stacks role/period on separate lines.
 function cmdExperience(_args, ctx) {
   const jobs = ctx.content.experience;
-  const roleWidth = Math.max(...jobs.map((j) => j.role.length));
+  const narrow = isNarrow();
+  const roleWidth = narrow ? 0 : Math.max(...jobs.map((j) => j.role.length));
   const out = [...heading("Experience")];
   for (const job of jobs) {
     out.push(blank());
-    out.push(row(`${job.role.padEnd(roleWidth)}  ${job.period}`, "subheading"));
+    if (narrow) {
+      out.push(row(job.role, "subheading"));
+      out.push(text(job.period, "muted"));
+    } else {
+      out.push(row(`${job.role.padEnd(roleWidth)}  ${job.period}`, "subheading"));
+    }
     out.push(text(job.company, "muted"));
     for (const b of job.bullets) out.push(text(`  - ${b}`));
   }
@@ -102,11 +119,17 @@ function cmdExperience(_args, ctx) {
 
 function cmdEducation(_args, ctx) {
   const edu = ctx.content.education;
-  const degreeWidth = Math.max(...edu.map((e) => e.degree.length));
+  const narrow = isNarrow();
+  const degreeWidth = narrow ? 0 : Math.max(...edu.map((e) => e.degree.length));
   const out = [...heading("Education")];
   for (const e of edu) {
     out.push(blank());
-    out.push(row(`${e.degree.padEnd(degreeWidth)}  ${e.period}`, "subheading"));
+    if (narrow) {
+      out.push(row(e.degree, "subheading"));
+      out.push(text(e.period, "muted"));
+    } else {
+      out.push(row(`${e.degree.padEnd(degreeWidth)}  ${e.period}`, "subheading"));
+    }
     out.push(text(e.school, "muted"));
   }
   return out;
@@ -133,8 +156,25 @@ function cmdSkills(_args, ctx) {
 
 function cmdCerts(_args, ctx) {
   const rows = ctx.content.certifications;
-  const widths = colWidths(rows.map((c) => [c.date, c.name]), 2);
   const out = [...heading("Certifications"), blank()];
+
+  if (isNarrow()) {
+    for (const c of rows) {
+      out.push(text(c.name, "subheading"));
+      out.push(
+        html(
+          `${ctx.escapeHtml(c.date)} — ` +
+            `<a href="${ctx.escapeHtml(c.url)}" target="_blank" rel="noopener noreferrer">verify</a>`,
+          "muted"
+        )
+      );
+      out.push(blank());
+    }
+    out.pop();
+    return out;
+  }
+
+  const widths = colWidths(rows.map((c) => [c.date, c.name]), 2);
   out.push(head(padCols(["DATE", "CERTIFICATION"], widths) + "  LINK"));
   for (const c of rows) {
     out.push(

@@ -77,6 +77,9 @@ body {
   min-height: 0;
   overflow-y: auto;
   overflow-x: auto;
+  /* Without this, scrolling past the bottom of the output chains up to the
+     outer page and reveals #plain-resume underneath the terminal. */
+  overscroll-behavior-y: contain;
 }
 
 .output {
