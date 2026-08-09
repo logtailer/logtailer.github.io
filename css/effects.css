@@ -18,7 +18,8 @@
   mix-blend-mode: multiply;
 }
 
-.line.ascii,
+.nf-logo,
+.nf-header,
 .prompt-label {
   text-shadow: 0 0 6px rgba(136, 192, 208, 0.35);
 }
@@ -29,7 +30,8 @@
   .terminal::before {
     display: none;
   }
-  .line.ascii,
+  .nf-logo,
+  .nf-header,
   .prompt-label {
     text-shadow: none;
   }

@@ -7,6 +7,7 @@ export const content = {
     title: "Site Reliability Engineer",
     promptUser: "sumit",
     promptHost: "portfolio",
+    yearsExperience: 4,
   },
 
   contact: {

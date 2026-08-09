@@ -1,9 +1,9 @@
-// Boot/intro sequencer: ASCII banner reveal, fake boot log, typewriter intro,
-// then hands off to interactive mode. Skippable via any keypress/click, and
-// collapses to instant under prefers-reduced-motion.
+// Boot/intro sequencer: fake boot log, neofetch-style logo+specs reveal,
+// typewriter intro, then hands off to interactive mode. Skippable via any
+// keypress/click, and collapses to instant under prefers-reduced-motion.
 
-import { banner } from "./ascii-art.js";
 import * as terminal from "./terminal.js";
+import { buildNeofetchBlocks } from "./neofetch.js";
 
 const BOOT_LOG = [
   "[ OK ] Loading kernel modules: sre, devops, kubernetes...",
@@ -34,16 +34,16 @@ export async function run(content, { hintEl } = {}) {
   if (hintEl && !skip.value) hintEl.hidden = false;
 
   try {
-    for (const line of banner) {
-      terminal.appendLine(line, "ascii");
-      if (!skip.value) await sleep(35);
+    for (const line of BOOT_LOG) {
+      terminal.appendLine(line, "bootlog");
+      if (!skip.value) await sleep(100);
     }
 
     terminal.appendBlank();
 
-    for (const line of BOOT_LOG) {
-      terminal.appendLine(line, "bootlog");
-      if (!skip.value) await sleep(100);
+    for (const block of buildNeofetchBlocks(content)) {
+      terminal.appendHTML(block.value, block.className);
+      if (!skip.value) await sleep(45);
     }
 
     terminal.appendBlank();

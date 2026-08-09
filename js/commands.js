@@ -2,7 +2,7 @@
 // ctx.content (content.js) and return output blocks — no direct DOM access,
 // so this file stays testable/editable independent of terminal.js.
 
-import { banner } from "./ascii-art.js";
+import { buildNeofetchBlocks } from "./neofetch.js";
 
 const FILES = {
   "about.txt": "about",
@@ -237,8 +237,8 @@ function cmdClear(_args, ctx) {
   return [];
 }
 
-function cmdBanner(_args, _ctx) {
-  return banner.map((line) => text(line, "ascii"));
+function cmdBanner(_args, ctx) {
+  return buildNeofetchBlocks(ctx.content);
 }
 
 function cmdLs(_args, _ctx) {
@@ -270,7 +270,7 @@ export const COMMANDS = {
   contact: { summary: "how to reach Sumit", run: cmdContact, aliases: [] },
   resume: { summary: "open/download resume PDF", run: cmdResume, aliases: [] },
   clear: { summary: "clear the screen", run: cmdClear, aliases: ["cls"] },
-  banner: { summary: "replay intro banner", run: cmdBanner, aliases: [] },
+  banner: { summary: "replay the system info banner", run: cmdBanner, aliases: ["neofetch"] },
   ls: { summary: "list sections (alias)", run: cmdLs, aliases: [] },
   cat: { summary: "cat <file> — alias for section commands", run: cmdCat, aliases: [] },
   sudo: { summary: "", run: cmdSudo, aliases: [], hidden: true },

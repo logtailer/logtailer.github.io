@@ -93,12 +93,6 @@ body {
   min-height: 1.5em;
 }
 
-.line.ascii {
-  color: var(--accent);
-  white-space: pre;
-  overflow-x: auto;
-}
-
 .line.bootlog {
   color: var(--muted);
   font-size: 0.92em;
@@ -144,6 +138,34 @@ body {
 
 .line.error {
   color: var(--error);
+}
+
+.nf-logo {
+  color: var(--accent);
+}
+
+.nf-header {
+  color: var(--heading);
+  font-weight: 700;
+}
+
+.nf-rule {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.nf-label {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.nf-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 3px;
+  border-radius: 2px;
+  vertical-align: middle;
 }
 
 .line.echo {
