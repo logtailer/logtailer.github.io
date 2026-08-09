@@ -19,6 +19,10 @@ body {
   font-family: var(--mono);
   font-size: 15px;
   line-height: 1.5;
+  /* #app is a fixed 100dvh and #plain-resume is position:fixed (out of
+     flow), so body should never actually have anything to scroll — this
+     is a defensive backstop, not load-bearing on its own. */
+  overflow: hidden;
 }
 
 .sr-only {
@@ -267,15 +271,40 @@ body {
 }
 
 /* Plain-text fallback: deliberately styled as an ordinary readable document,
-   not a terminal — this is the accessible/no-JS/SEO path, not a themed view. */
+   not a terminal — this is the accessible/no-JS/SEO path, not a themed view.
+   Hidden by default and revealed via :target (no JS required) rather than
+   living in normal document flow — if it sits in-flow below #app, <body>
+   becomes taller than the viewport and picks up scroll wheel input the
+   moment the pointer is anywhere off to the side of the centered terminal
+   column, since there's no scrollable element under the pointer there for
+   the browser to scroll instead. */
 .plain-resume {
+  display: none;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  background: #fff;
+  z-index: 200;
+}
+
+.plain-resume:target {
+  display: block;
+}
+
+.plain-resume-inner {
   max-width: 720px;
-  margin: 3rem auto;
-  padding: 0 1.25rem 3rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
   font-family: var(--sans);
   color: #1a1a1a;
-  background: #fff;
-  border-top: 3px solid var(--bg-alt);
+}
+
+.back-to-terminal {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: #2b6cb0;
 }
 
 .plain-resume h1 {

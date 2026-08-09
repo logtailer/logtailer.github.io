@@ -55,8 +55,13 @@
   </div>
 
   <section id="plain-resume" class="plain-resume" aria-label="Plain text resume">
-    <!-- Populated at runtime by js/main.js from js/content.js, so it can never
-         drift out of sync with what the terminal commands report. -->
+    <div class="plain-resume-inner">
+      <a class="back-to-terminal" href="#">&larr; Back to terminal</a>
+      <div id="plain-resume-content">
+        <!-- Populated at runtime by js/main.js from js/content.js, so it can
+             never drift out of sync with what the terminal commands report. -->
+      </div>
+    </div>
   </section>
 
   <script type="module" src="js/main.js"></script>

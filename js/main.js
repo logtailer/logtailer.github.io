@@ -112,11 +112,11 @@ function setupMobileControls(state, ctx) {
 }
 
 // Renders a plain, semantic HTML version of the same content.js data into
-// #plain-resume — the accessible/no-JS/SEO fallback reached via the skip link.
-// Built from the same data model as the terminal commands so nothing here can
-// drift out of sync with what the terminal reports.
+// #plain-resume-content — the accessible/no-JS/SEO fallback reached via the
+// skip link. Built from the same data model as the terminal commands so
+// nothing here can drift out of sync with what the terminal reports.
 function renderPlainFallback(content) {
-  const root = document.getElementById("plain-resume");
+  const root = document.getElementById("plain-resume-content");
   if (!root) return;
 
   const el = (tag, opts = {}, children = []) => {
