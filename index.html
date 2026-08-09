@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sumit Anand — DevOps / SRE Engineer</title>
+  <meta name="description" content="Sumit Anand — Site Reliability Engineer. A terminal-styled portfolio: resume, experience, and personal infrastructure projects." />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/terminal.css" />
+  <link rel="stylesheet" href="css/effects.css" />
+</head>
+<body>
+  <a class="skip-link" href="#plain-resume">Skip to plain-text resume</a>
+
+  <main id="terminal" class="terminal">
+    <div id="scroll-region" class="scroll-region">
+      <div id="output" class="output"></div>
+
+      <div id="prompt-line" class="line prompt-line" hidden>
+        <span id="prompt-label" class="prompt-label">guest@portfolio:~$</span>
+        <span class="input-wrap">
+          <input
+            id="cmd-input"
+            type="text"
+            autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            aria-label="Terminal command input"
+          />
+        </span>
+      </div>
+    </div>
+
+    <div id="skip-hint" class="skip-hint" hidden>press any key to skip intro</div>
+
+    <!-- Visually-hidden live region for screen readers; kept separate from #output
+         so announcing new text never clobbers the visible scrollback DOM. -->
+    <div id="sr-live" class="sr-only" aria-live="polite" aria-atomic="false"></div>
+  </main>
+
+  <nav id="mobile-controls" class="mobile-controls" aria-label="Quick commands">
+    <button type="button" data-cmd="help">help</button>
+    <button type="button" data-cmd="about">about</button>
+    <button type="button" data-cmd="projects">projects</button>
+    <button type="button" data-cmd="contact">contact</button>
+    <button type="button" id="hist-up" aria-label="Previous command">▲</button>
+    <button type="button" id="hist-down" aria-label="Next command">▼</button>
+  </nav>
+
+  <section id="plain-resume" class="plain-resume" aria-label="Plain text resume">
+    <!-- Populated at runtime by js/main.js from js/content.js, so it can never
+         drift out of sync with what the terminal commands report. -->
+  </section>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

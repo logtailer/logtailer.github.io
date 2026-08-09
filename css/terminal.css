@@ -1,0 +1,251 @@
+:root {
+  --bg: #2e3440;
+  --bg-alt: #3b4252;
+  --fg: #e5e9f0;
+  --muted: #7b88a1;
+  --accent: #88c0d0;
+  --heading: #81a1c1;
+  --subheading: #ebcb8b;
+  --error: #bf616a;
+
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code",
+    Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -3rem;
+  left: 0.5rem;
+  background: var(--accent);
+  color: var(--bg);
+  padding: 0.5rem 1rem;
+  border-radius: 0 0 0.25rem 0.25rem;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  text-decoration: none;
+  z-index: 100;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+.terminal {
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 1rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll-region {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.output {
+  display: flex;
+  flex-direction: column;
+}
+
+.line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 1.5em;
+}
+
+.line.ascii {
+  color: var(--accent);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.line.bootlog {
+  color: var(--muted);
+  font-size: 0.92em;
+}
+
+.line.heading {
+  color: var(--heading);
+  font-weight: 700;
+  margin-top: 0.15em;
+}
+
+.line.subheading {
+  color: var(--subheading);
+  font-weight: 600;
+}
+
+.line.muted {
+  color: var(--muted);
+}
+
+.line.error {
+  color: var(--error);
+}
+
+.line.echo {
+  color: var(--fg);
+  opacity: 0.85;
+}
+
+.line.blank {
+  min-height: 0.75em;
+}
+
+.line a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.prompt-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5ch;
+  margin-top: 0.25em;
+}
+
+.prompt-line[hidden] {
+  display: none;
+}
+
+.prompt-label {
+  color: var(--accent);
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.input-wrap {
+  flex: 1;
+  display: flex;
+}
+
+#cmd-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: inherit;
+  caret-color: var(--accent);
+  caret-shape: block;
+  padding: 0;
+}
+
+.skip-hint {
+  position: fixed;
+  top: 0.75rem;
+  right: 1rem;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--bg-alt);
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.25rem;
+  opacity: 0.85;
+}
+
+.mobile-controls {
+  display: none;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom));
+  background: var(--bg-alt);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  position: sticky;
+  bottom: 0;
+  flex-wrap: wrap;
+}
+
+.mobile-controls button {
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.3rem;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.mobile-controls button:active {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+@media (max-width: 640px) {
+  .terminal {
+    padding: 1rem 0.85rem 0.5rem;
+  }
+  body {
+    font-size: 14px;
+  }
+  .mobile-controls {
+    display: flex;
+  }
+}
+
+/* Plain-text fallback: deliberately styled as an ordinary readable document,
+   not a terminal — this is the accessible/no-JS/SEO path, not a themed view. */
+.plain-resume {
+  max-width: 720px;
+  margin: 3rem auto;
+  padding: 0 1.25rem 3rem;
+  font-family: var(--sans);
+  color: #1a1a1a;
+  background: #fff;
+  border-top: 3px solid var(--bg-alt);
+}
+
+.plain-resume h1 {
+  font-size: 1.6rem;
+  margin-top: 1.5rem;
+}
+
+.plain-resume h2 {
+  font-size: 1.2rem;
+  margin-top: 2rem;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.25rem;
+}
+
+.plain-resume h3 {
+  font-size: 1rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.plain-resume ul {
+  padding-left: 1.25rem;
+}
+
+.plain-resume li {
+  margin-bottom: 0.35rem;
+}
+
+.plain-resume a {
+  color: #2b6cb0;
+}

@@ -1,0 +1,36 @@
+/* Subtle CRT scanline + glow effect. Purely decorative, CSS-only (no JS/canvas
+   per-frame cost), and isolated here so it can be deleted or disabled without
+   touching terminal.css layout/color rules. */
+
+.terminal::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.08),
+    rgba(0, 0, 0, 0.08) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+}
+
+.line.ascii,
+.prompt-label {
+  text-shadow: 0 0 6px rgba(136, 192, 208, 0.35);
+}
+
+/* Off on small/low-power screens where the overlay repaint cost isn't worth it,
+   and off whenever the user has asked for reduced motion. */
+@media (max-width: 640px), (prefers-reduced-motion: reduce) {
+  .terminal::before {
+    display: none;
+  }
+  .line.ascii,
+  .prompt-label {
+    text-shadow: none;
+  }
+}
