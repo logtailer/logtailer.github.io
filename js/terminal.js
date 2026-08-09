@@ -66,6 +66,14 @@ export function announceText(text) {
   announce(text);
 }
 
+// For output that needs real DOM (form inputs, live event listeners) rather
+// than a static text/html block — e.g. the mail command's inline form.
+export function appendNode(node) {
+  refs.outputEl.appendChild(node);
+  scrollToBottom();
+  return node;
+}
+
 export function appendPromptEcho(promptString, commandText) {
   appendLine(`${promptString} ${commandText}`, "echo");
 }

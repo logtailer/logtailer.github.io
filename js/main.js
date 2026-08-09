@@ -6,6 +6,7 @@ import * as terminal from "./terminal.js";
 import * as boot from "./boot.js";
 import * as history from "./history.js";
 import * as theme from "./theme.js";
+import { buildMailForm } from "./mailform.js";
 import { dispatch, completions } from "./commands.js";
 
 function init() {
@@ -37,6 +38,9 @@ function init() {
       state.promptString = theme.getPromptString(name, content.meta);
       terminal.setPromptLabel(state.promptString);
       return true;
+    },
+    renderMailForm: () => {
+      terminal.appendNode(buildMailForm(content.contact.email));
     },
   };
 
@@ -135,7 +139,6 @@ function renderPlainFallback(content) {
   root.appendChild(el("p", { text: content.summary }));
 
   const contactList = el("ul");
-  contactList.appendChild(el("li", { text: `Phone: ${content.contact.phone}` }));
   contactList.appendChild(
     el("li", {}, [el("a", { href: `mailto:${content.contact.email}`, text: content.contact.email })])
   );

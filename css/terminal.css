@@ -172,6 +172,85 @@ body {
   vertical-align: middle;
 }
 
+.mail-form-wrap {
+  margin: 0.4em 0;
+}
+
+.mail-form {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 1rem;
+  font-family: var(--mono);
+}
+
+.mail-form-title {
+  color: var(--heading);
+  font-weight: 700;
+}
+
+.mail-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.mail-form-field input,
+.mail-form-field textarea {
+  background: var(--bg-alt);
+  border: 1px solid var(--muted);
+  border-radius: 3px;
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  padding: 0.4rem 0.5rem;
+  resize: vertical;
+}
+
+.mail-form-field input:focus,
+.mail-form-field textarea:focus {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.mail-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.mail-form-actions button {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 3px;
+  padding: 0.4rem 1rem;
+  font-family: var(--mono);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mail-form-actions button:hover {
+  opacity: 0.85;
+}
+
+.mail-form-hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.mail-form-status {
+  color: var(--subheading);
+  padding: 0.5rem 0;
+}
+
 .line.echo {
   color: var(--fg);
   opacity: 0.85;

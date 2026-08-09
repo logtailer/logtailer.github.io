@@ -264,14 +264,21 @@ function cmdContact(_args, ctx) {
   return [
     ...heading("Contact"),
     blank(),
-    text(`Phone:    ${c.phone}`),
     html(`Email:    <a href="mailto:${ctx.escapeHtml(c.email)}">${ctx.escapeHtml(c.email)}</a>`),
     html(`LinkedIn: <a href="${ctx.escapeHtml(c.linkedinUrl)}" target="_blank" rel="noopener noreferrer">${ctx.escapeHtml(c.linkedin)}</a>`),
     html(`GitHub:   <a href="${ctx.escapeHtml(c.githubUrl)}" target="_blank" rel="noopener noreferrer">${ctx.escapeHtml(c.github)}</a>`),
+    blank(),
+    text("Run `mail` to send a message directly.", "muted"),
   ];
 }
 function dataContact(_args, ctx) {
-  return ctx.content.contact;
+  const { email, linkedin, linkedinUrl, github, githubUrl } = ctx.content.contact;
+  return { email, linkedin, linkedinUrl, github, githubUrl };
+}
+
+function cmdMail(_args, ctx) {
+  ctx.renderMailForm();
+  return [];
 }
 
 function cmdResume(_args, _ctx) {
@@ -335,6 +342,7 @@ export const COMMANDS = {
   certs: { summary: "certifications", run: cmdCerts, aliases: ["certifications"], data: dataCerts },
   projects: { summary: "personal projects (add a name for detail)", run: cmdProjects, aliases: [], data: dataProjects },
   contact: { summary: "how to reach Sumit", run: cmdContact, aliases: [], data: dataContact },
+  mail: { summary: "send Sumit a message (opens your email client)", run: cmdMail, aliases: ["email"] },
   resume: { summary: "open/download resume PDF", run: cmdResume, aliases: [] },
   clear: { summary: "clear the screen", run: cmdClear, aliases: ["cls"] },
   banner: { summary: "replay the system info banner", run: cmdBanner, aliases: ["neofetch"] },
