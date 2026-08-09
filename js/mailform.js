@@ -2,7 +2,7 @@
 // party: submitting just builds a mailto: link and hands it to the visitor's
 // own email client — the message is never transmitted by this page itself.
 
-export function buildMailForm(toEmail) {
+export function buildMailForm(toEmail, onSubmitted) {
   const wrap = document.createElement("div");
   wrap.className = "mail-form-wrap";
 
@@ -41,6 +41,8 @@ export function buildMailForm(toEmail) {
     status.className = "mail-form-status";
     status.textContent = "Opened your email client with this pre-filled — hit send from there to reach Sumit.";
     form.replaceWith(status);
+
+    if (onSubmitted) onSubmitted();
   });
 
   wrap.appendChild(form);

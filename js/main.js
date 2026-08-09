@@ -40,7 +40,11 @@ function init() {
       return true;
     },
     renderMailForm: () => {
-      terminal.appendNode(buildMailForm(content.contact.email));
+      // Focus the form's first field once submitted, focus goes back to the
+      // terminal prompt — runLine() below leaves focus alone whenever a
+      // command has already claimed it, so neither of these gets stolen.
+      const node = terminal.appendNode(buildMailForm(content.contact.email, terminal.focusInput));
+      node.querySelector("input, textarea")?.focus();
     },
   };
 
@@ -48,11 +52,16 @@ function init() {
 }
 
 function runLine(line, state, ctx) {
+  const focusedBefore = document.activeElement;
   terminal.appendPromptEcho(state.promptString, line);
   history.push(line);
   const blocks = dispatch(line, ctx);
   terminal.appendBlocks(blocks);
-  terminal.focusInput();
+  // A command (e.g. `mail`) may have moved focus into its own interactive
+  // element while dispatching — only reclaim the prompt if nothing did.
+  if (document.activeElement === focusedBefore) {
+    terminal.focusInput();
+  }
 }
 
 function startInteractive(state, ctx, inputEl) {
