@@ -19,21 +19,23 @@
   <div id="app" class="app">
     <main id="terminal" class="terminal">
       <div id="scroll-region" class="scroll-region">
-        <div id="output" class="output"></div>
+        <div class="scroll-region-inner">
+          <div id="output" class="output"></div>
 
-        <div id="prompt-line" class="line prompt-line" hidden>
-          <span id="prompt-label" class="prompt-label">guest@portfolio:~$</span>
-          <span class="input-wrap">
-            <input
-              id="cmd-input"
-              type="text"
-              autocomplete="off"
-              autocapitalize="off"
-              autocorrect="off"
-              spellcheck="false"
-              aria-label="Terminal command input"
-            />
-          </span>
+          <div id="prompt-line" class="line prompt-line" hidden>
+            <span id="prompt-label" class="prompt-label">guest@portfolio:~$</span>
+            <span class="input-wrap">
+              <input
+                id="cmd-input"
+                type="text"
+                autocomplete="off"
+                autocapitalize="off"
+                autocorrect="off"
+                spellcheck="false"
+                aria-label="Terminal command input"
+              />
+            </span>
+          </div>
         </div>
       </div>
 

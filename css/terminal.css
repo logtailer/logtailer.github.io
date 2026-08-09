@@ -59,8 +59,6 @@ body {
 .app {
   height: 100vh;
   height: 100dvh;
-  max-width: 900px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -70,12 +68,15 @@ body {
   position: relative;
   flex: 1;
   min-height: 0; /* let this flex child shrink so scroll-region can actually scroll */
-  padding: 1.5rem 1.25rem 1rem;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
+/* Spans the full window width so its scrollbar sits at the true right edge
+   of the browser like a normal page — the 900px reading-width constraint
+   lives on .scroll-region-inner instead, not on this element, so centering
+   the text doesn't also drag the scrollbar into the middle of the screen. */
 .scroll-region {
   flex: 1;
   min-height: 0;
@@ -84,6 +85,12 @@ body {
   /* Without this, scrolling past the bottom of the output chains up to the
      outer page and reveals #plain-resume underneath the terminal. */
   overscroll-behavior-y: contain;
+}
+
+.scroll-region-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 1rem;
 }
 
 .output {
