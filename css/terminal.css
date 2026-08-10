@@ -119,6 +119,7 @@ body {
   color: var(--muted);
   opacity: 0.5;
   white-space: pre;
+  overflow-x: hidden; /* purely decorative — clip instead of scrolling to see trailing dashes */
 }
 
 .line.subheading {
@@ -149,6 +150,15 @@ body {
 
 .line.error {
   color: var(--error);
+}
+
+/* Easter-egg ASCII art (cowsay, the sl train) — pre so spacing/alignment
+   can't be mangled by wrapping, with horizontal scroll as the fallback on
+   narrow screens rather than letting the art collapse. */
+.line.art {
+  color: var(--accent);
+  white-space: pre;
+  overflow-x: auto;
 }
 
 .nf-logo {

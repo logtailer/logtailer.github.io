@@ -5,6 +5,7 @@
 import { buildNeofetchBlocks } from "./neofetch.js";
 import { toYaml } from "./yaml.js";
 import { THEMES } from "./theme.js";
+import { buildCowsay, randomQuote } from "./eastereggs.js";
 
 const FILES = {
   "about.txt": "about",
@@ -333,6 +334,77 @@ function cmdSudo(_args, _ctx) {
   ];
 }
 
+// Traps the terminal in a fake modal edit session until :wq/:x/:q! is typed
+// — the classic "how do I exit vim" joke. Actual keystroke interception
+// happens in main.js (ctx.enterVimMode); this just renders the fake buffer.
+function cmdVim(_args, ctx) {
+  ctx.enterVimMode();
+  return [
+    text("~", "muted"),
+    text("~", "muted"),
+    text("~", "muted"),
+    text("~", "muted"),
+    text("~", "muted"),
+    text("~", "muted"),
+    blank(),
+    text('"resume.txt" [New File]', "muted"),
+  ];
+}
+
+function cmdKubectl(args, ctx) {
+  const sub = args.join(" ").toLowerCase();
+  if (sub !== "get pods" && sub !== "get pod") {
+    return [text(`error: kubectl: unknown command "${args.join(" ")}" — try \`kubectl get pods\``, "error")];
+  }
+  const projects = ctx.content.projects;
+  const age = `${ctx.content.meta.yearsExperience}y`;
+
+  // Same reasoning as certs/experience/education: a NAME + READY + STATUS +
+  // RESTARTS + AGE row is wider than a phone screen once padded, so stack
+  // instead of clipping into a horizontal-scroll table there.
+  if (isNarrow()) {
+    const out = [];
+    for (const p of projects) {
+      out.push(row(p.name, "subheading"));
+      out.push(text(`  Running   0 restarts   ${age}`, "muted"));
+    }
+    return out;
+  }
+
+  const widths = colWidths(projects.map((p) => [p.name]), 1);
+  const out = [head(`${"NAME".padEnd(widths[0])}  READY   STATUS    RESTARTS   AGE`)];
+  for (const p of projects) {
+    out.push(row(`${p.name.padEnd(widths[0])}  1/1     Running   0          ${age}`));
+  }
+  return out;
+}
+
+function cmdChaosMonkey(_args, ctx) {
+  ctx.triggerChaos();
+  return [
+    text("🐒 Chaos Monkey unleashed — terminating a random pod...", "error"),
+    text("AWS FIS experiment fault_injection-01 started.", "muted"),
+  ];
+}
+
+function cmdSl(_args, ctx) {
+  ctx.runTrain();
+  return [];
+}
+
+function cmdCowsay(args, ctx) {
+  return buildCowsay(args.join(" ")).map((line) => text(line, "art"));
+}
+
+function cmdFortune(_args, _ctx) {
+  return [text(randomQuote(), "subheading")];
+}
+
+function cmdPoweroff(_args, ctx) {
+  ctx.powerOff();
+  return [text("Powering off... (press any key to power back on)", "muted")];
+}
+
 export const COMMANDS = {
   help: { summary: "list available commands", run: cmdHelp, aliases: [] },
   about: { summary: "who is Sumit", run: cmdAbout, aliases: ["whoami"], data: dataAbout },
@@ -350,6 +422,13 @@ export const COMMANDS = {
   ls: { summary: "list sections (alias)", run: cmdLs, aliases: [] },
   cat: { summary: "cat <file> — alias for section commands", run: cmdCat, aliases: [] },
   sudo: { summary: "", run: cmdSudo, aliases: [], hidden: true },
+  vim: { summary: "", run: cmdVim, aliases: ["vi"], hidden: true },
+  kubectl: { summary: "get pods (real k8s energy, fake cluster)", run: cmdKubectl, aliases: [] },
+  "chaos-monkey": { summary: "unleash chaos engineering on this terminal", run: cmdChaosMonkey, aliases: ["chaos"] },
+  sl: { summary: "", run: cmdSl, aliases: [], hidden: true },
+  cowsay: { summary: "cowsay <message>", run: cmdCowsay, aliases: [] },
+  fortune: { summary: "random SRE/on-call wisdom", run: cmdFortune, aliases: ["quote"] },
+  poweroff: { summary: "power off the terminal (any key restores it)", run: cmdPoweroff, aliases: [] },
 };
 
 function resolveCommand(name) {

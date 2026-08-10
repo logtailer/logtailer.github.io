@@ -7,6 +7,7 @@ import * as boot from "./boot.js";
 import * as history from "./history.js";
 import * as theme from "./theme.js";
 import { buildMailForm } from "./mailform.js";
+import { TRAIN_SPRITE } from "./eastereggs.js";
 import { dispatch, completions } from "./commands.js";
 
 function init() {
@@ -23,7 +24,7 @@ function init() {
 
   // A returning visitor's theme choice, applied before boot starts so the
   // whole intro plays in the right colors, not just the interactive part.
-  const state = { themeName: theme.getStoredTheme(), promptString: "" };
+  const state = { themeName: theme.getStoredTheme(), promptString: "", vimMode: false };
   theme.applyTheme(state.themeName);
   state.promptString = theme.getPromptString(state.themeName, content.meta);
 
@@ -45,6 +46,43 @@ function init() {
       // command has already claimed it, so neither of these gets stolen.
       const node = terminal.appendNode(buildMailForm(content.contact.email, terminal.focusInput));
       node.querySelector("input, textarea")?.focus();
+    },
+    enterVimMode: () => {
+      state.vimMode = true;
+      terminal.setPromptLabel(":");
+    },
+    triggerChaos: () => {
+      const el = document.getElementById("terminal");
+      el.classList.add("chaos-glitch");
+      setTimeout(() => {
+        el.classList.remove("chaos-glitch");
+        terminal.appendLine("Recovered in 2.3s — SLA met (99.95%). All pods healthy.", "muted");
+      }, 2000);
+    },
+    runTrain: () => {
+      const lines = TRAIN_SPRITE.map(() => terminal.appendLine("", "art"));
+      let pad = 46;
+      const step = () => {
+        TRAIN_SPRITE.forEach((sprite, i) => {
+          terminal.updateLineSilently(lines[i], " ".repeat(Math.max(pad, 0)) + sprite);
+        });
+        pad -= 6;
+        if (pad > -20) setTimeout(step, 90);
+      };
+      step();
+    },
+    powerOff: () => {
+      const app = document.getElementById("app");
+      app.classList.add("powering-off");
+      setTimeout(() => {
+        app.classList.add("powered-off");
+        const restore = () => {
+          app.classList.remove("powering-off", "powered-off");
+          terminal.focusInput();
+        };
+        document.addEventListener("keydown", restore, { once: true });
+        document.addEventListener("click", restore, { once: true });
+      }, 420);
     },
   };
 
@@ -70,6 +108,10 @@ function startInteractive(state, ctx, inputEl) {
   terminal.focusInput();
 
   inputEl.addEventListener("keydown", (e) => {
+    if (state.vimMode) {
+      handleVimKeydown(e, state);
+      return;
+    }
     if (e.key === "Enter") {
       e.preventDefault();
       const line = terminal.getInputValue();
@@ -104,6 +146,7 @@ function setupMobileControls(state, ctx) {
 
   controls.querySelectorAll("button[data-cmd]").forEach((btn) => {
     btn.addEventListener("click", () => {
+      if (state.vimMode) return; // trapped — mobile chips shouldn't sneak a command through
       runLine(btn.dataset.cmd, state, ctx);
     });
   });
@@ -112,16 +155,43 @@ function setupMobileControls(state, ctx) {
   const down = document.getElementById("hist-down");
   if (up) {
     up.addEventListener("click", () => {
+      if (state.vimMode) return;
       terminal.setInputValue(history.prev(terminal.getInputValue()));
       terminal.focusInput();
     });
   }
   if (down) {
     down.addEventListener("click", () => {
+      if (state.vimMode) return;
       terminal.setInputValue(history.next(terminal.getInputValue()));
       terminal.focusInput();
     });
   }
+}
+
+// While "in vim": only lines starting with `:` do anything (the illusion of
+// typing into the file otherwise) — :wq/:x/:wq! save-and-quit, :q! quits
+// without saving, anything else `:`-prefixed gets vim's real, famous error.
+function handleVimKeydown(e, state) {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  const line = terminal.getInputValue().trim();
+  terminal.setInputValue("");
+  if (!line.startsWith(":")) return;
+  if (line === ":wq" || line === ":wq!" || line === ":x") {
+    terminal.appendLine('"resume.txt" 1L, 42B written', "muted");
+    exitVimMode(state);
+  } else if (line === ":q!") {
+    exitVimMode(state);
+  } else {
+    terminal.appendLine("E37: No write since last change (add ! to override)", "error");
+  }
+}
+
+function exitVimMode(state) {
+  state.vimMode = false;
+  terminal.setPromptLabel(state.promptString);
+  terminal.focusInput();
 }
 
 // Renders a plain, semantic HTML version of the same content.js data into
