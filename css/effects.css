@@ -18,10 +18,13 @@
   mix-blend-mode: multiply;
 }
 
-.nf-logo,
 .nf-header,
 .prompt-label {
   text-shadow: 0 0 6px rgba(136, 192, 208, 0.35);
+}
+
+.nf-avatar {
+  box-shadow: 0 0 10px rgba(136, 192, 208, 0.35);
 }
 
 /* Off on small/low-power screens where the overlay repaint cost isn't worth it,
@@ -30,10 +33,12 @@
   .terminal::before {
     display: none;
   }
-  .nf-logo,
   .nf-header,
   .prompt-label {
     text-shadow: none;
+  }
+  .nf-avatar {
+    box-shadow: none;
   }
 }
 

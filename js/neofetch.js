@@ -1,18 +1,10 @@
-// Builds the neofetch/screenfetch-style logo + specs block, shared by
+// Builds the neofetch/screenfetch-style avatar + specs block, shared by
 // boot.js (initial reveal) and commands.js's `banner` command (instant
 // replay) so the two never drift out of sync.
 
-import { neofetchLogo } from "./ascii-art.js";
 import { escapeHtml } from "./terminal.js";
 
-const LOGO_WIDTH = Math.max(...neofetchLogo.map((l) => l.length));
 const SWATCH_VARS = ["--accent", "--heading", "--subheading", "--error", "--muted", "--fg"];
-
-// Matches the .mobile-controls breakpoint in terminal.css — below this, a
-// logo+specs side-by-side row is wider than the screen.
-function isNarrow() {
-  return window.innerWidth <= 640;
-}
 
 function buildSpecs(content) {
   const { meta, skills, projects, certifications } = content;
@@ -33,36 +25,30 @@ function buildSwatchRow() {
   return SWATCH_VARS.map((v) => `<span class="nf-swatch" style="background:var(${v})"></span>`).join("");
 }
 
-function buildInfoLines(content) {
+// Returns [{ type: 'html', value }] — same output-block shape commands.js
+// uses, so it can be appended via terminal.appendBlocks directly. It's a
+// single combined block (image + specs laid out with flexbox) rather than
+// one row per spec line — real layout, not a text zipper, so it can't be
+// built line-by-line the way the old ASCII-logo version was.
+export function buildNeofetchBlocks(content) {
   const { meta } = content;
   const specs = buildSpecs(content);
-  return [
-    `<span class="nf-header">${escapeHtml(`${meta.promptUser}@${meta.promptHost}`)}</span>`,
-    `<span class="nf-rule">${"─".repeat(20)}</span>`,
-    ...specs.map(([label, value]) => `<span class="nf-label">${escapeHtml(label)}</span>: ${escapeHtml(value)}`),
-    "",
-    buildSwatchRow(),
-  ];
-}
 
-// Returns [{ type: 'html', value }] — same output-block shape commands.js
-// uses, so it can be appended via terminal.appendBlocks directly.
-export function buildNeofetchBlocks(content) {
-  const infoLines = buildInfoLines(content);
+  const specLines = [
+    `<div class="nf-header">${escapeHtml(`${meta.promptUser}@${meta.promptHost}`)}</div>`,
+    `<div class="nf-rule">${"─".repeat(20)}</div>`,
+    ...specs.map(
+      ([label, value]) => `<div><span class="nf-label">${escapeHtml(label)}</span>: ${escapeHtml(value)}</div>`
+    ),
+    `<div class="nf-swatch-row">${buildSwatchRow()}</div>`,
+  ].join("");
 
-  if (isNarrow()) {
-    const blocks = neofetchLogo.map((l) => ({ type: "html", value: `<span class="nf-logo">${escapeHtml(l)}</span>` }));
-    blocks.push({ type: "html", value: " " });
-    for (const line of infoLines) blocks.push({ type: "html", value: line || " " });
-    return blocks;
-  }
+  const panel = `
+    <div class="nf-panel">
+      <img class="nf-avatar" src="avatar.jpg" alt="${escapeHtml(meta.name)}" width="140" height="140" />
+      <div class="nf-specs">${specLines}</div>
+    </div>
+  `;
 
-  const rows = Math.max(neofetchLogo.length, infoLines.length);
-  const blocks = [];
-  for (let i = 0; i < rows; i++) {
-    const logoPart = (neofetchLogo[i] ?? "").padEnd(LOGO_WIDTH);
-    const infoPart = infoLines[i] ?? "";
-    blocks.push({ type: "html", value: `<span class="nf-logo">${escapeHtml(logoPart)}</span>  ${infoPart}` });
-  }
-  return blocks;
+  return [{ type: "html", value: panel }];
 }

@@ -1,4 +1,4 @@
-// Boot/intro sequencer: fake boot log, neofetch-style logo+specs reveal,
+// Boot/intro sequencer: fake boot log, neofetch-style avatar+specs reveal,
 // typewriter intro, then hands off to interactive mode. Skippable via any
 // keypress/click, and collapses to instant under prefers-reduced-motion.
 

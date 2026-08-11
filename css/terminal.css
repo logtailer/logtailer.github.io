@@ -161,8 +161,26 @@ body {
   overflow-x: auto;
 }
 
-.nf-logo {
-  color: var(--accent);
+.nf-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+}
+
+.nf-avatar {
+  flex: none;
+  width: 140px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+}
+
+.nf-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  min-width: 0; /* let long spec values wrap instead of forcing the flex item wider */
 }
 
 .nf-header {
@@ -180,6 +198,10 @@ body {
   font-weight: 600;
 }
 
+.nf-swatch-row {
+  margin-top: 0.3em;
+}
+
 .nf-swatch {
   display: inline-block;
   width: 14px;
@@ -187,6 +209,18 @@ body {
   margin-right: 3px;
   border-radius: 2px;
   vertical-align: middle;
+}
+
+@media (max-width: 640px) {
+  .nf-panel {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .nf-specs {
+    text-align: left;
+    width: 100%;
+  }
 }
 
 .mail-form-wrap {
