@@ -60,14 +60,17 @@ function init() {
       }, 2000);
     },
     runTrain: () => {
+      // Real `sl` enters from the left and exits stage right — this used to
+      // run pad from 46 down to -20 (right-to-left), which read as the train
+      // reversing. Mirrored to start flush left and grow rightward instead.
       const lines = TRAIN_SPRITE.map(() => terminal.appendLine("", "art"));
-      let pad = 46;
+      let pad = 0;
       const step = () => {
         TRAIN_SPRITE.forEach((sprite, i) => {
-          terminal.updateLineSilently(lines[i], " ".repeat(Math.max(pad, 0)) + sprite);
+          terminal.updateLineSilently(lines[i], " ".repeat(pad) + sprite);
         });
-        pad -= 6;
-        if (pad > -20) setTimeout(step, 90);
+        pad += 6;
+        if (pad < 66) setTimeout(step, 90);
       };
       step();
     },
