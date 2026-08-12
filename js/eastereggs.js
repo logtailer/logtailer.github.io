@@ -42,3 +42,13 @@ export const QUOTES = [
 export function randomQuote() {
   return QUOTES[Math.floor(Math.random() * QUOTES.length)];
 }
+
+// `lolcat`-style rainbow text: one <span> per character, hue stepped around
+// the color wheel. Takes escapeHtml as a param rather than importing it from
+// terminal.js, keeping this file DOM-free per the module comment above.
+export function buildLolcat(message, escapeHtml) {
+  const value = message && message.trim() ? message.trim() : "Automate everything, colorfully.";
+  return [...value]
+    .map((ch, i) => `<span style="color:hsl(${(i * 18) % 360}, 85%, 65%)">${escapeHtml(ch)}</span>`)
+    .join("");
+}

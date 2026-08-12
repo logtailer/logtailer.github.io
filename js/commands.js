@@ -5,7 +5,7 @@
 import { buildNeofetchBlocks } from "./neofetch.js";
 import { toYaml } from "./yaml.js";
 import { THEMES } from "./theme.js";
-import { buildCowsay, randomQuote } from "./eastereggs.js";
+import { buildCowsay, randomQuote, buildLolcat } from "./eastereggs.js";
 
 const FILES = {
   "about.txt": "about",
@@ -16,6 +16,12 @@ const FILES = {
   "projects/": "projects",
   "contact.vcf": "contact",
   "resume.pdf": "resume",
+};
+
+// Not listed by `ls` — undocumented, only reachable if you already know to
+// try them, same spirit as the other hidden commands below.
+const HIDDEN_FILES = {
+  "/etc/os-release": "os-release",
 };
 
 function text(value, className) {
@@ -105,6 +111,24 @@ function cmdHelp(_args, ctx) {
   out.push(text("Tip: use Tab to autocomplete, Up/Down to browse history.", "muted"));
   out.push(text("Tip: most data commands support `-o json` / `-o yaml` for raw output.", "muted"));
   return out;
+}
+
+// Real `apropos <keyword>` greps man page NAME sections; this greps command
+// names/summaries/aliases instead. References COMMANDS below — fine, since
+// this only runs after the module (and COMMANDS) has finished loading, same
+// as resolveCommand/dispatchNamed further down this file.
+function cmdApropos(args, ctx) {
+  const keyword = args.join(" ").trim().toLowerCase();
+  if (!keyword) return [text("usage: apropos <keyword>", "error")];
+  const matches = Object.entries(COMMANDS).filter(
+    ([name, def]) =>
+      !def.hidden &&
+      (name.includes(keyword) ||
+        def.summary.toLowerCase().includes(keyword) ||
+        def.aliases.some((a) => a.includes(keyword)))
+  );
+  if (matches.length === 0) return [text(`${keyword}: nothing appropriate.`, "muted")];
+  return matches.map(([name, def]) => text(`${name.padEnd(14)} - ${def.summary || name}`));
 }
 
 function cmdAbout(_args, ctx) {
@@ -302,9 +326,26 @@ function cmdLs(_args, _ctx) {
 
 function cmdCat(args, ctx) {
   if (args.length === 0) return [text("usage: cat <file>", "error")];
-  const target = FILES[args[0]];
+  const target = FILES[args[0]] || HIDDEN_FILES[args[0]];
   if (!target) return [text(`cat: ${args[0]}: No such file or directory`, "error")];
   return dispatchNamed(target, args.slice(1), ctx);
+}
+
+function cmdOsRelease(_args, ctx) {
+  const { yearsExperience } = ctx.content.meta;
+  const lines = [
+    `NAME="SumitOS"`,
+    `VERSION="${yearsExperience}.0 (SRE Edition)"`,
+    `ID=sumitos`,
+    `ID_LIKE=devops`,
+    `VERSION_ID="${yearsExperience}.0"`,
+    `PRETTY_NAME="SumitOS ${yearsExperience}.0 (SRE Edition)"`,
+    `ANSI_COLOR="0;36"`,
+    `HOME_URL="https://logtailer.github.io/"`,
+    `SUPPORT_URL="mailto:${ctx.content.contact.email}"`,
+    `LOGO=terminal`,
+  ];
+  return lines.map((l) => text(l, "muted"));
 }
 
 function cmdTheme(args, ctx) {
@@ -351,11 +392,7 @@ function cmdVim(_args, ctx) {
   ];
 }
 
-function cmdKubectl(args, ctx) {
-  const sub = args.join(" ").toLowerCase();
-  if (sub !== "get pods" && sub !== "get pod") {
-    return [text(`error: kubectl: unknown command "${args.join(" ")}" — try \`kubectl get pods\``, "error")];
-  }
+function kubectlGetPods(ctx) {
   const projects = ctx.content.projects;
   const age = `${ctx.content.meta.yearsExperience}y`;
 
@@ -377,6 +414,84 @@ function cmdKubectl(args, ctx) {
     out.push(row(`${p.name.padEnd(widths[0])}  1/1     Running   0          ${age}`));
   }
   return out;
+}
+
+function kubectlDescribe(slug, ctx) {
+  if (!slug) {
+    return [
+      text("error: describe: you must specify the type and name", "error"),
+      text("Run `kubectl get pods` to list names, then `kubectl describe <name>`.", "muted"),
+    ];
+  }
+  const projects = ctx.content.projects;
+  const index = projects.findIndex((p) => p.slug === slug);
+  if (index === -1) {
+    return [text(`Error from server (NotFound): pods "${slug}" not found`, "error")];
+  }
+  const project = projects[index];
+  const age = `${ctx.content.meta.yearsExperience}y`;
+
+  // Plain wrapping lines rather than a padded table — describe output is
+  // prose-length (taglines, project details), not fixed-width columns, so
+  // it should wrap on narrow screens instead of needing its own isNarrow
+  // branch the way the get-pods table does.
+  const out = [
+    text(`Name:         ${project.name}`),
+    text(`Namespace:    portfolio`),
+    text(`Node:         portfolio-node-1/10.0.0.4`),
+    text(`Start Time:   ${age} ago`),
+    text(`Labels:       app=${project.slug},tier=personal-project`),
+    text(`Annotations:  description: ${project.tagline}`),
+    text(`Status:       Running`),
+    text(`IP:           10.244.0.${(index + 1) * 10}`),
+    blank(),
+    text(`Containers:`),
+    text(`  ${project.slug}:`),
+    text(`    Image:          ghcr.io/logtailer/${project.slug}:latest`),
+    text(`    State:          Running`),
+    text(`    Ready:          True`),
+    text(`    Restart Count:  0`),
+    blank(),
+    text(`Conditions:`),
+    text(`  Type              Status`),
+    text(`  Initialized       True`),
+    text(`  Ready             True`),
+    text(`  ContainersReady   True`),
+    text(`  PodScheduled      True`),
+    blank(),
+    text(`Events:`),
+    text(`  Type    Reason    Age   From               Message`),
+    text(`  ----    ------    ----  ----               -------`),
+    text(`  Normal  Scheduled ${age}   default-scheduler  Successfully assigned portfolio/${project.slug} to portfolio-node-1`),
+  ];
+  for (const detail of project.details) {
+    out.push(text(`  Normal  Shipped   ${age}   sumit               ${detail}`));
+  }
+  return out;
+}
+
+function cmdKubectl(args, ctx) {
+  const [sub, ...rest] = args;
+  const subLower = (sub || "").toLowerCase();
+
+  if (subLower === "get") {
+    const target = rest.join(" ").toLowerCase();
+    if (target !== "pods" && target !== "pod") {
+      return [text(`error: the server doesn't have a resource type "${rest.join(" ")}"`, "error")];
+    }
+    return kubectlGetPods(ctx);
+  }
+
+  if (subLower === "describe") {
+    // Accepts both `describe <name>` and the more idiomatic `describe pod <name>`.
+    const podArgs = rest[0]?.toLowerCase() === "pod" || rest[0]?.toLowerCase() === "pods" ? rest.slice(1) : rest;
+    return kubectlDescribe((podArgs[0] || "").toLowerCase(), ctx);
+  }
+
+  return [
+    text(`error: kubectl: unknown command "${args.join(" ")}"`, "error"),
+    text("Try `kubectl get pods` or `kubectl describe <name>`.", "muted"),
+  ];
 }
 
 function cmdChaosMonkey(_args, ctx) {
@@ -405,8 +520,24 @@ function cmdPoweroff(_args, ctx) {
   return [text("Powering off... (press any key to power back on)", "muted")];
 }
 
+function cmdFiglet(args, ctx) {
+  const value = args.join(" ").trim() || ctx.content.meta.name;
+  return [html(`<div class="figlet-text">${ctx.escapeHtml(value)}</div>`)];
+}
+
+function cmdLolcat(args, ctx) {
+  return [html(buildLolcat(args.join(" "), ctx.escapeHtml))];
+}
+
+function cmdToilet(args, ctx) {
+  const value = args.join(" ").trim() || ctx.content.meta.name;
+  const rainbow = buildLolcat(value, ctx.escapeHtml);
+  return [html(`<div class="toilet-box"><div class="toilet-text">${rainbow}</div></div>`)];
+}
+
 export const COMMANDS = {
   help: { summary: "list available commands", run: cmdHelp, aliases: [] },
+  apropos: { summary: "apropos <keyword> — search command descriptions", run: cmdApropos, aliases: [] },
   about: { summary: "who is Sumit", run: cmdAbout, aliases: ["whoami"], data: dataAbout },
   experience: { summary: "work history", run: cmdExperience, aliases: ["exp"], data: dataExperience },
   education: { summary: "academic background", run: cmdEducation, aliases: ["edu"], data: dataEducation },
@@ -423,12 +554,16 @@ export const COMMANDS = {
   cat: { summary: "cat <file> — alias for section commands", run: cmdCat, aliases: [] },
   sudo: { summary: "", run: cmdSudo, aliases: [], hidden: true },
   vim: { summary: "", run: cmdVim, aliases: ["vi"], hidden: true },
-  kubectl: { summary: "get pods (real k8s energy, fake cluster)", run: cmdKubectl, aliases: [] },
+  kubectl: { summary: "get pods / describe <name> (real k8s energy, fake cluster)", run: cmdKubectl, aliases: [] },
   "chaos-monkey": { summary: "unleash chaos engineering on this terminal", run: cmdChaosMonkey, aliases: ["chaos"] },
   sl: { summary: "", run: cmdSl, aliases: [], hidden: true },
   cowsay: { summary: "cowsay <message>", run: cmdCowsay, aliases: [] },
   fortune: { summary: "random SRE/on-call wisdom", run: cmdFortune, aliases: ["quote"] },
   poweroff: { summary: "power off the terminal (any key restores it)", run: cmdPoweroff, aliases: [] },
+  "os-release": { summary: "", run: cmdOsRelease, aliases: [], hidden: true },
+  figlet: { summary: "figlet <text> — print it big", run: cmdFiglet, aliases: [] },
+  toilet: { summary: "toilet <text> — print it big and loud", run: cmdToilet, aliases: [] },
+  lolcat: { summary: "lolcat <text> — rainbow it", run: cmdLolcat, aliases: [] },
 };
 
 function resolveCommand(name) {
