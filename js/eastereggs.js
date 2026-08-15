@@ -52,3 +52,89 @@ export function buildLolcat(message, escapeHtml) {
     .map((ch, i) => `<span style="color:hsl(${(i * 18) % 360}, 85%, 65%)">${escapeHtml(ch)}</span>`)
     .join("");
 }
+
+// A real figlet/toilet builds letterforms out of ASCII blocks rather than
+// just printing the word bigger — this is a small hand-authored 5x5
+// dot-matrix font (uppercase only; case is folded on lookup) covering
+// A-Z, 0-9, space, and a handful of punctuation marks. Unknown characters
+// fall back to a solid block rather than vanishing silently.
+const FIGLET_ROWS = 5;
+const FIGLET_FALLBACK = ["#####", "#   #", "#   #", "#   #", "#####"];
+const FIGLET_FONT = {
+  A: [" ### ", "#   #", "#####", "#   #", "#   #"],
+  B: ["#### ", "#   #", "#### ", "#   #", "#### "],
+  C: [" ####", "#    ", "#    ", "#    ", " ####"],
+  D: ["#### ", "#   #", "#   #", "#   #", "#### "],
+  E: ["#####", "#    ", "###  ", "#    ", "#####"],
+  F: ["#####", "#    ", "###  ", "#    ", "#    "],
+  G: [" ####", "#    ", "# ###", "#   #", " ####"],
+  H: ["#   #", "#   #", "#####", "#   #", "#   #"],
+  I: ["#####", "  #  ", "  #  ", "  #  ", "#####"],
+  J: ["  ###", "   # ", "   # ", "#  # ", " ##  "],
+  K: ["#   #", "#  # ", "###  ", "#  # ", "#   #"],
+  L: ["#    ", "#    ", "#    ", "#    ", "#####"],
+  M: ["#   #", "## ##", "# # #", "#   #", "#   #"],
+  N: ["#   #", "##  #", "# # #", "#  ##", "#   #"],
+  O: [" ### ", "#   #", "#   #", "#   #", " ### "],
+  P: ["#### ", "#   #", "#### ", "#    ", "#    "],
+  Q: [" ### ", "#   #", "# # #", "#  # ", " ## #"],
+  R: ["#### ", "#   #", "#### ", "# #  ", "#  # "],
+  S: [" ####", "#    ", " ### ", "    #", "#### "],
+  T: ["#####", "  #  ", "  #  ", "  #  ", "  #  "],
+  U: ["#   #", "#   #", "#   #", "#   #", " ### "],
+  V: ["#   #", "#   #", "#   #", " # # ", "  #  "],
+  W: ["#   #", "#   #", "# # #", "## ##", "#   #"],
+  X: ["#   #", " # # ", "  #  ", " # # ", "#   #"],
+  Y: ["#   #", " # # ", "  #  ", "  #  ", "  #  "],
+  Z: ["#####", "   # ", "  #  ", " #   ", "#####"],
+  0: [" ### ", "#   #", "# # #", "#   #", " ### "],
+  1: ["  #  ", " ##  ", "  #  ", "  #  ", "#####"],
+  2: ["#### ", "    #", "  ## ", " #   ", "#####"],
+  3: ["#### ", "    #", "  ## ", "    #", "#### "],
+  4: ["#  # ", "#  # ", "#####", "   # ", "   # "],
+  5: ["#####", "#    ", "#### ", "    #", "#### "],
+  6: [" ####", "#    ", "#### ", "#   #", " ### "],
+  7: ["#####", "    #", "   # ", "  #  ", "  #  "],
+  8: [" ### ", "#   #", " ### ", "#   #", " ### "],
+  9: [" ### ", "#   #", " ####", "    #", " ### "],
+  " ": ["     ", "     ", "     ", "     ", "     "],
+  "!": ["  #  ", "  #  ", "  #  ", "     ", "  #  "],
+  "?": [" ### ", "#   #", "  ## ", "     ", "  #  "],
+  ".": ["     ", "     ", "     ", "     ", "  #  "],
+  ",": ["     ", "     ", "     ", "  #  ", " #   "],
+  "-": ["     ", "     ", "#####", "     ", "     "],
+  "'": [" #   ", " #   ", "     ", "     ", "     "],
+  ":": ["     ", "  #  ", "     ", "  #  ", "     "],
+};
+
+// Returns FIGLET_ROWS plain-text lines (one glyph column per source
+// character, single-space gap between glyphs).
+export function buildFiglet(message) {
+  const value = (message && message.trim() ? message.trim() : "SUMIT").toUpperCase();
+  const glyphs = [...value].map((ch) => FIGLET_FONT[ch] || FIGLET_FALLBACK);
+  const lines = [];
+  for (let row = 0; row < FIGLET_ROWS; row++) {
+    lines.push(glyphs.map((g) => g[row]).join(" "));
+  }
+  return lines;
+}
+
+// Same glyphs as buildFiglet, but each column gets its own hue so the whole
+// banner reads as vertical rainbow stripes — `toilet`'s answer to lolcat.
+export function buildFigletRainbow(message, escapeHtml) {
+  return buildFiglet(message).map((line) =>
+    [...line]
+      .map((ch, col) => `<span style="color:hsl(${(col * 14) % 360}, 85%, 65%)">${escapeHtml(ch)}</span>`)
+      .join("")
+  );
+}
+
+// Wraps the rainbow banner in an ASCII box border, sized to the widest row.
+export function buildToiletBox(message, escapeHtml) {
+  const plainRows = buildFiglet(message);
+  const width = Math.max(...plainRows.map((r) => r.length));
+  const border = `+${"-".repeat(width + 2)}+`;
+  const rainbowRows = buildFigletRainbow(message, escapeHtml);
+  const boxedRows = rainbowRows.map((row, i) => `| ${row}${" ".repeat(width - plainRows[i].length)} |`);
+  return [border, ...boxedRows, border];
+}

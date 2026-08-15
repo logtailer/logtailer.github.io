@@ -5,7 +5,7 @@
 import { buildNeofetchBlocks } from "./neofetch.js";
 import { toYaml } from "./yaml.js";
 import { THEMES } from "./theme.js";
-import { buildCowsay, randomQuote, buildLolcat } from "./eastereggs.js";
+import { buildCowsay, randomQuote, buildLolcat, buildFiglet, buildToiletBox } from "./eastereggs.js";
 
 const FILES = {
   "about.txt": "about",
@@ -522,7 +522,7 @@ function cmdPoweroff(_args, ctx) {
 
 function cmdFiglet(args, ctx) {
   const value = args.join(" ").trim() || ctx.content.meta.name;
-  return [html(`<div class="figlet-text">${ctx.escapeHtml(value)}</div>`)];
+  return buildFiglet(value).map((line) => text(line, "art"));
 }
 
 function cmdLolcat(args, ctx) {
@@ -531,8 +531,7 @@ function cmdLolcat(args, ctx) {
 
 function cmdToilet(args, ctx) {
   const value = args.join(" ").trim() || ctx.content.meta.name;
-  const rainbow = buildLolcat(value, ctx.escapeHtml);
-  return [html(`<div class="toilet-box"><div class="toilet-text">${rainbow}</div></div>`)];
+  return buildToiletBox(value, ctx.escapeHtml).map((row) => html(row, "art"));
 }
 
 export const COMMANDS = {
