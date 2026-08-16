@@ -11,7 +11,6 @@ export const content = {
   },
 
   contact: {
-    phone: "(+91)-9156011787",
     email: "as.anandsumit@gmail.com",
     linkedin: "linkedin.com/in/asanandsumit",
     linkedinUrl: "https://www.linkedin.com/in/asanandsumit/",
