@@ -10,6 +10,20 @@ import { buildMailForm } from "./mailform.js";
 import { TRAIN_SPRITE } from "./eastereggs.js";
 import { dispatch, completions } from "./commands.js";
 
+// ↑ ↑ ↓ ↓ ← → ← → B A
+const KONAMI_SEQUENCE = [
+  "arrowup",
+  "arrowup",
+  "arrowdown",
+  "arrowdown",
+  "arrowleft",
+  "arrowright",
+  "arrowleft",
+  "arrowright",
+  "b",
+  "a",
+];
+
 function init() {
   const outputEl = document.getElementById("output");
   const liveEl = document.getElementById("sr-live"); // separate visually-hidden live region
@@ -87,6 +101,43 @@ function init() {
         document.addEventListener("click", restore, { once: true });
       }, 420);
     },
+    // Konami-code payload: a canvas "digital rain" overlay on top of the
+    // terminal, non-interactive (pointer-events: none) so it doesn't block
+    // typing, and self-removing after a few seconds.
+    triggerMatrix: () => {
+      if (boot.prefersReducedMotion()) return;
+      const el = document.getElementById("terminal");
+      const canvas = document.createElement("canvas");
+      canvas.className = "matrix-rain";
+      el.appendChild(canvas);
+      const c2d = canvas.getContext("2d");
+      const fontSize = 16;
+      canvas.width = el.clientWidth;
+      canvas.height = el.clientHeight;
+      const columns = Math.max(1, Math.floor(canvas.width / fontSize));
+      const drops = new Array(columns).fill(1);
+      const chars = "01SRE$#@&%アイウエオカキクケコ";
+      let frameId;
+      const draw = () => {
+        c2d.fillStyle = "rgba(0,0,0,0.08)";
+        c2d.fillRect(0, 0, canvas.width, canvas.height);
+        c2d.fillStyle = "#8fffb0";
+        c2d.font = `${fontSize}px monospace`;
+        drops.forEach((y, i) => {
+          const ch = chars[Math.floor(Math.random() * chars.length)];
+          c2d.fillText(ch, i * fontSize, y * fontSize);
+          if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+          drops[i] += 1;
+        });
+        frameId = requestAnimationFrame(draw);
+      };
+      draw();
+      setTimeout(() => {
+        cancelAnimationFrame(frameId);
+        canvas.classList.add("matrix-rain-fade");
+        setTimeout(() => canvas.remove(), 600);
+      }, 4500);
+    },
   };
 
   boot.run(content, { hintEl }).then(() => startInteractive(state, ctx, inputEl));
@@ -141,6 +192,26 @@ function startInteractive(state, ctx, inputEl) {
   });
 
   setupMobileControls(state, ctx);
+  setupKonamiCode(state, ctx);
+}
+
+// A document-level listener rather than binding on inputEl: arrow keys are
+// already claimed there for history navigation (preventDefault, but not
+// stopPropagation), so tracking the sequence separately at the document
+// level sees the same keystrokes without disturbing that behavior.
+function setupKonamiCode(state, ctx) {
+  let buffer = [];
+  document.addEventListener("keydown", (e) => {
+    if (state.vimMode) return;
+    buffer.push(e.key.toLowerCase());
+    buffer = buffer.slice(-KONAMI_SEQUENCE.length);
+    if (buffer.length === KONAMI_SEQUENCE.length && buffer.every((k, i) => k === KONAMI_SEQUENCE[i])) {
+      buffer = [];
+      terminal.appendBlank();
+      terminal.appendLine("Konami code accepted. Welcome to the Matrix.", "subheading");
+      ctx.triggerMatrix();
+    }
+  });
 }
 
 function setupMobileControls(state, ctx) {

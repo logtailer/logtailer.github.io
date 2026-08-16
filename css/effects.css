@@ -81,3 +81,25 @@
     opacity: 0;
   }
 }
+
+/* Konami code payload: a canvas "digital rain" overlay. pointer-events:none
+   so it never blocks typing the next command; main.js gates creating this
+   at all behind prefers-reduced-motion, this is just a CSS-level backstop. */
+.matrix-rain {
+  position: absolute;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  opacity: 0.9;
+  transition: opacity 0.6s ease;
+}
+
+.matrix-rain-fade {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .matrix-rain {
+    display: none;
+  }
+}
