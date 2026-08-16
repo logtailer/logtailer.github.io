@@ -38,3 +38,7 @@ export function reset() {
   cursor = null;
   draft = "";
 }
+
+export function all() {
+  return buffer.slice();
+}

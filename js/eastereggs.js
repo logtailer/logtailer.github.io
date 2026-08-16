@@ -138,3 +138,81 @@ export function buildToiletBox(message, escapeHtml) {
   const boxedRows = rainbowRows.map((row, i) => `| ${row}${" ".repeat(width - plainRows[i].length)} |`);
   return [border, ...boxedRows, border];
 }
+
+const DAD_JOKES = [
+  "Why do SREs make terrible poker players? Their pager always tells on them.",
+  "I told my team a joke about UDP. Not sure if it landed.",
+  "There are 10 kinds of SREs: those who understand binary, and those who don't.",
+  "Why did the deployment go to therapy? Too many unresolved dependencies.",
+  "I'd tell you a DNS joke, but it takes 24–48 hours to propagate.",
+  "My code doesn't have bugs. It has undocumented features with three nines of availability.",
+  "Why did the load balancer break up with the server? It needed some space, and better health checks.",
+  "How many SREs does it take to change a light bulb? None — that's a hardware problem, file a ticket.",
+  "Why don't SREs trust the cloud? Because it's just someone else's computer, and someone else's problem at 3am.",
+  "What did the SRE say to the flaky test? It's not you, it's your race condition.",
+];
+
+export function randomDadJoke() {
+  return DAD_JOKES[Math.floor(Math.random() * DAD_JOKES.length)];
+}
+
+const FAKE_PROCESSES = [
+  { name: "coffee.service", cpu: 92.4, mem: 12.1 },
+  { name: "on-call-anxiety.exe", cpu: 78.3, mem: 45.6 },
+  { name: "kubectl-yaml-indent-fixer", cpu: 61.0, mem: 8.2 },
+  { name: "terraform-plan-review", cpu: 54.7, mem: 22.9 },
+  { name: "slack-notifications", cpu: 43.2, mem: 15.0 },
+  { name: "prometheus-alert-triage", cpu: 38.9, mem: 19.4 },
+  { name: "stackoverflow-tab-x47", cpu: 31.5, mem: 3.3 },
+  { name: "rubber-duck-debugger", cpu: 12.0, mem: 1.1 },
+];
+
+// Returns { pid, name, cpu, mem } rows, sorted highest CPU first, same shape
+// real `top` uses — the rendering side (column widths/padding) belongs to
+// the handler, not here.
+export function fakeProcesses() {
+  return FAKE_PROCESSES.map((p, i) => ({ pid: 1000 + i, ...p }));
+}
+
+// Simulated `ping` output. Takes a random-ish jitter, so this is the one
+// builder in this file that isn't deterministic — same precedent as
+// randomQuote()/randomDadJoke() above.
+export function buildPing(host, ip) {
+  const lines = [`PING ${host} (${ip}): 56 data bytes`];
+  const times = [];
+  for (let i = 0; i < 4; i++) {
+    const t = 0.3 + Math.random() * 0.4;
+    times.push(t);
+    lines.push(`64 bytes from ${ip}: icmp_seq=${i} ttl=64 time=${t.toFixed(3)} ms`);
+  }
+  const min = Math.min(...times);
+  const max = Math.max(...times);
+  const avg = times.reduce((a, b) => a + b, 0) / times.length;
+  lines.push("");
+  lines.push(`--- ${host} ping statistics ---`);
+  lines.push("4 packets transmitted, 4 packets received, 0.0% packet loss");
+  lines.push(`round-trip min/avg/max = ${min.toFixed(3)}/${avg.toFixed(3)}/${max.toFixed(3)} ms`);
+  return lines;
+}
+
+// Fixed set of fake infrastructure hops, always ending at "the-cloud" —
+// the punchline being that everything, eventually, is just someone else's
+// computer (see the QUOTES list above).
+const TRACE_HOPS = [
+  "localhost (127.0.0.1)",
+  "gateway.local (10.0.0.1)",
+  "isp-edge-router.net (198.51.100.1)",
+  "us-east-1.aws-transit.net (203.0.113.5)",
+  "cloudfront-edge.aws.com (203.0.113.9)",
+  "the-cloud (☁)",
+];
+
+export function buildTraceroute(host) {
+  const lines = [`traceroute to ${host}, 30 hops max`];
+  let t = 0.4;
+  TRACE_HOPS.forEach((hop, i) => {
+    t += Math.random() * 6 + 1;
+    lines.push(`${String(i + 1).padStart(2)}  ${hop}  ${t.toFixed(3)} ms`);
+  });
+  return lines;
+}
